@@ -10,3 +10,8 @@ This is an Astropy affiliated package.
 from ._astropy_init import *
 # ----------------------------------------------------------------------------
 
+# For egg_info test builds to pass, put package imports here.
+#if not _ASTROPY_SETUP_:
+if True:
+	from .core import *
+	from .ttypes import *
