@@ -5,21 +5,71 @@ This is an Astropy affiliated package.
 """
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
+from collections import OrderedDict
 import traitlets
+from . import pyaml as y
+import ruamel.yaml as ry
+import six
 
 class ParSet(traitlets.HasTraits):
+
+#    def __init__(self):
+#        super(ParSet, self).__init__()
+#        self.trait_values = OrderedDict()
 
     def value_dict(self):
         '''
         Return a dictionary of all the traits keyed by name, and the values 
         being the current trait value (not class or type).
-        '''
-        tnames = self.trait_names()
-        vd = {}
-        for name in tnames:
-            vd[name] = self.__getattribute__(name)
-        return vd
+        ''' 
+        return self._trait_values
 
+    def ynode(self):
+        tlist = []
+        vdict = self.value_dict()
+        tdict = self.traits()
+        keys = self.trait_names()
+        for key in keys:
+            tlist.append((y.YScalarStr(key), 
+                tdict[key].ynode(vdict[key])))
+        return y.YMap(tlist)
+
+    def save(self, filename):
+        f = open(filename, 'w')
+        self._save(f)
+        f.close()
+
+    def _save(self, stream):
+        '''
+        Save the parset to a yaml file
+        '''
+    
+        dumper = ry.SafeDumper(stream)
+        dumper.open()
+        dumper.serialize(self.ynode())
+        dumper.close()
+
+    def load(self, filename):
+        '''
+        Load the parset from a file
+        '''
+        f = open(filename)
+        data = ry.safe_load(f)
+        f.close()
+        if not isinstance(data, dict):
+            raise ValueError("file not of expected parameter format")
+        vdict = self.value_dict()
+        tdict = self.traits()
+        for key in data:
+            if key in vdict:
+                vdict[key] = tdict[key].validate(self, data[key])
+
+    def __str__(self):
+        sf = six.StringIO()
+        self._save(sf)
+        pstring = sf.getvalue()
+        sf.close()
+        return pstring
 
 class ParameterHandler:
     '''
