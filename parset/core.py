@@ -11,6 +11,8 @@ from . import pyaml as y
 import ruamel.yaml as ry
 import six
 
+ustr = six.text_type
+
 class ParSet(traitlets.HasTraits):
 
 #    def __init__(self):
@@ -43,11 +45,19 @@ class ParSet(traitlets.HasTraits):
         '''
         Save the parset to a yaml file
         '''
-    
-        dumper = ry.SafeDumper(stream)
+        mstream = six.StringIO()
+        dumper = ry.SafeDumper(mstream)
         dumper.open()
         dumper.serialize(self.ynode())
         dumper.close()
+        myaml = mstream.getvalue()
+        mstream.close()
+        data = ry.load(myaml, ry.RoundTripLoader)
+        traits = self.traits()
+        for key in traits:
+            if traits[key].comment:
+                data.yaml_add_eol_comment(traits[key].comment, key)
+        stream.write(ustr(ry.dump(data, Dumper=ry.RoundTripDumper)))
 
     def load(self, filename):
         '''

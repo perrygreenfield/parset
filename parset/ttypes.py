@@ -65,6 +65,12 @@ class QuantityScalar(Quantity):
 
     info_text = "requires an astropy scalar quantity (i.e., with units)"
 
+    def __init__(self, default_value=Undefined, unit=None,
+                        equivalency=None, comment='', **metadata):
+            super(QuantityScalar, self).__init__( 
+                default_value=default_value, unit=unit, equivalency=equivalency,
+                comment=comment, **metadata)
+
     def validate(self, obj, value):
         if isinstance(value, u.Quantity):
             if value.shape == ():            
